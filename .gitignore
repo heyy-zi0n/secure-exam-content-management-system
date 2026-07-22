@@ -1,0 +1,53 @@
+# ===========================
+# Environment Files
+# ===========================
+.env
+.env.local
+.env.*
+
+# ===========================
+# Logs
+# ===========================
+logs/*
+!logs/.gitkeep
+
+# ===========================
+# Temporary Storage
+# ===========================
+storage/temporary/*
+!storage/temporary/.gitkeep
+
+# ===========================
+# Encrypted Files
+# ===========================
+storage/encrypted/*
+!storage/encrypted/.gitkeep
+
+# ===========================
+# Archived Files
+# ===========================
+storage/archive/*
+!storage/archive/.gitkeep
+
+# ===========================
+# Cache (if added later)
+# ===========================
+cache/*
+
+# ===========================
+# IDE
+# ===========================
+.vscode/
+.idea/
+
+# ===========================
+# Operating System Files
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Composer (if used later)
+# ===========================
+vendor/
+composer.lock
