@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom transitions for Dark Mode */
+.theme-transition {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
