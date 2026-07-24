@@ -13,65 +13,24 @@ $userId = $user['id'];
 $homeDept = $user['department_code'];
 
 // 1. Metrics Queries
-$assignedCount = $db->query("SELECT COUNT(*) FROM lecturer_course_assignments WHERE lecturer_id = $userId AND status = 'active'")->fetchColumn();
-$submittedCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE created_by = $userId")->fetchColumn();
-$vettingCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE created_by = $userId AND status IN ('Submitted', 'Re-Submitted', 'Under Review')")->fetchColumn();
-$returnedCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE created_by = $userId AND status = 'Correction Requested'")->fetchColumn();
-$approvedCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE created_by = $userId AND status IN ('Approved', 'Blind Lockdown Activated', 'Ready for Printing', 'Printing Queue', 'Printed')")->fetchColumn();
-$archivedCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE created_by = $userId AND status = 'Archived'")->fetchColumn();
+$assignedCount = $db->query("SELECT COUNT(*) FROM lecturer_course_assignments WHERE lecturer_id = $userId AND assignment_status = 'Active'")->fetchColumn();
+$submittedCount = 0;  // TODO: examination_papers
+$vettingCount   = 0;  // TODO: examination_papers
+$returnedCount  = 0;  // TODO: examination_papers
+$approvedCount  = 0;  // TODO: examination_papers
+$archivedCount  = 0;  // TODO: examination_papers
 
-// 2. Recent Submissions
-$subStmt = $db->prepare("
-    SELECT ep.*, c.course_code, c.course_title, u.full_name as moderator_name
-    FROM examination_papers ep
-    JOIN courses c ON ep.course_id = c.id
-    JOIN users u ON ep.assigned_moderator_id = u.id
-    WHERE ep.created_by = :id
-    ORDER BY ep.updated_at DESC LIMIT 5
-");
-$subStmt->execute([':id' => $userId]);
-$recentSubmissions = $subStmt->fetchAll();
+// 2. Recent Submissions — disabled until examination_papers migrated
+$recentSubmissions = []; // TODO: examination_papers
 
-// 3. Upcoming Deadlines for departments they teach in
-$deadlinesStmt = $db->prepare("
-    SELECT DISTINCT ss.department_code, d.name as department_name, ss.submission_deadline
-    FROM lecturer_course_assignments lca
-    JOIN courses c ON lca.course_id = c.id
-    JOIN system_settings ss ON c.department_code = ss.department_code
-    JOIN departments d ON ss.department_code = d.code
-    WHERE lca.lecturer_id = :id AND lca.status = 'active'
-");
-$deadlinesStmt->execute([':id' => $userId]);
-$deadlines = $deadlinesStmt->fetchAll();
+// 3. Upcoming Deadlines — disabled until system_settings migrated
+$deadlines = []; // TODO: system_settings
 
-// 4. Announcements Board (their home dept + departments they teach in)
-$annStmt = $db->prepare("
-    SELECT DISTINCT a.*, u.full_name as author_name, d.name as department_name
-    FROM announcements a
-    JOIN users u ON a.created_by = u.id
-    JOIN departments d ON a.department_code = d.code
-    WHERE a.department_code = :home_dept 
-       OR a.department_code IN (
-          SELECT DISTINCT c.department_code 
-          FROM lecturer_course_assignments lca
-          JOIN courses c ON lca.course_id = c.id
-          WHERE lca.lecturer_id = :id AND lca.status = 'active'
-       )
-    ORDER BY a.created_at DESC LIMIT 3
-");
-$annStmt->execute([':id' => $userId, ':home_dept' => $homeDept]);
-$announcements = $annStmt->fetchAll();
+// 4. Announcements Board — disabled until announcements migrated
+$announcements = []; // TODO: announcements
 
-// 5. Recent Activity Feed
-$logStmt = $db->prepare("
-    SELECT al.* 
-    FROM audit_logs al
-    WHERE al.user_id = :id 
-       OR (al.department_code = :home_dept AND al.action IN ('Blind Lockdown Activated', 'Paper Approved', 'Emergency Unlock'))
-    ORDER BY al.created_at DESC LIMIT 5
-");
-$logStmt->execute([':id' => $userId, ':home_dept' => $homeDept]);
-$activities = $logStmt->fetchAll();
+// 5. Recent Activity Feed — disabled until audit_logs migrated
+$activities = []; // TODO: audit_logs
 ?>
 
 <div class="space-y-6">

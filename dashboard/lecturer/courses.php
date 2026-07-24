@@ -10,13 +10,16 @@ $user = currentUser();
 
 // Fetch assigned courses
 $stmt = $db->prepare("
-    SELECT c.*, d.name as department_name, lca.assignment_date, s.name as session_name, sem.name as semester_name
+    SELECT c.*, d.name AS department_name, lca.assigned_date AS assignment_date, 
+           s.session_name, sem.semester_name,
+           l.level_name AS level
     FROM lecturer_course_assignments lca
     JOIN courses c ON lca.course_id = c.id
-    JOIN departments d ON c.department_code = d.code
+    JOIN departments d ON c.department_id = d.id
     JOIN academic_sessions s ON lca.academic_session_id = s.id
-    JOIN semesters sem ON lca.semester_id = sem.id
-    WHERE lca.lecturer_id = :lecturer_id AND lca.status = 'active'
+    JOIN semesters sem ON c.semester_id = sem.id
+    JOIN levels l ON c.level_id = l.id
+    WHERE lca.lecturer_id = :lecturer_id AND lca.assignment_status = 'Active'
     ORDER BY c.course_code ASC
 ");
 $stmt->execute([':lecturer_id' => $user['id']]);

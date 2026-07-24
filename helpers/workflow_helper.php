@@ -133,9 +133,12 @@ function approvePaper(int $paperId, int $moderatorId): string {
     try {
         // Fetch paper and details
         $stmt = $db->prepare("
-            SELECT ep.*, c.course_code, c.course_title, u.full_name as lecturer_name, u.email as lecturer_email
+            SELECT ep.*, c.course_code, c.course_title, 
+                   CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS lecturer_name, 
+                   u.email AS lecturer_email, d.code AS department_code
             FROM examination_papers ep
             JOIN courses c ON ep.course_id = c.id
+            JOIN departments d ON c.department_id = d.id
             JOIN users u ON ep.created_by = u.id
             WHERE ep.id = :id
         ");
@@ -183,7 +186,13 @@ function approvePaper(int $paperId, int $moderatorId): string {
         
         // Notify HOD, EO, and Lecturer
         // Find HOD and Exam Officer of the course department
-        $staffStmt = $db->prepare("SELECT id, role FROM users WHERE department_code = :dept AND role IN ('hod', 'exam_officer')");
+        $staffStmt = $db->prepare("
+            SELECT u.id, r.role_code AS role 
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            JOIN departments d ON u.department_id = d.id
+            WHERE d.code = :dept AND r.role_code IN ('HOD', 'EXAM_OFFICER')
+        ");
         $staffStmt->execute([':dept' => $dept]);
         $staff = $staffStmt->fetchAll();
         
@@ -458,11 +467,12 @@ function checkDelegation(string $departmentCode): ?array {
     try {
         $db = Database::getInstance();
         $stmt = $db->prepare("
-            SELECT * FROM hod_delegations 
-            WHERE department_code = :dept 
-              AND status = 'Active' 
-              AND start_date <= CURDATE() 
-              AND end_date >= CURDATE()
+            SELECT hd.* FROM hod_delegations hd
+            JOIN departments d ON hd.department_id = d.id
+            WHERE d.code = :dept 
+              AND hd.status = 'Active' 
+              AND hd.start_date <= CURDATE() 
+              AND hd.end_date >= CURDATE()
             LIMIT 1
         ");
         $stmt->execute([':dept' => $departmentCode]);

@@ -15,44 +15,13 @@ $success = '';
 
 // Handle Re-queuing Action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'queue_paper') {
-    if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
-        $error = "CSRF verification failed.";
-    } else {
-        $paperId = (int)($_POST['paper_id'] ?? 0);
-        
-        $chk = $db->prepare("SELECT id, status FROM examination_papers WHERE id = :id AND department_code = :dept");
-        $chk->execute([':id' => $paperId, ':dept' => $dept]);
-        $paper = $chk->fetch();
-        
-        if ($paper) {
-            $ins = $db->prepare("
-                INSERT INTO print_queue (paper_id, status)
-                VALUES (:paper_id, 'Ready')
-                ON DUPLICATE KEY UPDATE status = 'Ready'
-            ");
-            $ins->execute([':paper_id' => $paperId]);
-            
-            logAudit('Paper Queued', "Exam Officer manually queued paper ID $paperId for printing.");
-            $success = "Paper successfully placed in the active printing queue.";
-        } else {
-            $error = "Paper not found or unauthorized access.";
-        }
-    }
+    // TODO: examination_papers not yet migrated
+    $error = "This feature is pending examination_papers module migration.";
 }
 
 // Fetch Approved Departmental Papers
-$stmt = $db->prepare("
-    SELECT ep.*, c.course_code, c.course_title, c.level, u.full_name as lecturer_name, ar.approval_id, ar.approval_date, pq.status as queue_status
-    FROM examination_papers ep
-    JOIN courses c ON ep.course_id = c.id
-    JOIN users u ON ep.created_by = u.id
-    JOIN approval_records ar ON ep.id = ar.paper_id
-    LEFT JOIN print_queue pq ON ep.id = pq.paper_id
-    WHERE ep.department_code = :dept AND ep.status IN ('Approved', 'Blind Lockdown Activated', 'Ready for Printing', 'Printing Queue', 'Printed', 'Archived')
-    ORDER BY ar.approval_date DESC
-");
-$stmt->execute([':dept' => $dept]);
-$papers = $stmt->fetchAll();
+// TODO: examination_papers, approval_records, print_queue not yet migrated
+$papers = [];
 ?>
 
 <div class="space-y-6">

@@ -9,7 +9,7 @@ class Database {
     private static ?PDO $instance = null;
 
     private string $host = '127.0.0.1';
-    private string $db   = 'lasu_fcit_exam_cms';
+    private string $db   = 'lasu_exam_enterprise_db';
     private string $user = 'root';
     private string $pass = '';
     private string $port = '3306';

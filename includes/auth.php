@@ -49,8 +49,13 @@ function loginUser(string $identifier, string $password): bool {
         $db = Database::getInstance();
 
         $stmt = $db->prepare("
-            SELECT * FROM users 
-            WHERE email = :email OR staff_id = :staff_id 
+            SELECT u.id, u.staff_id, u.email, u.password_hash, u.account_status,
+                   CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS full_name,
+                   r.role_code AS role, d.code AS department_code
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.email = :email OR u.staff_id = :staff_id 
             LIMIT 1
         ");
 
@@ -61,10 +66,10 @@ function loginUser(string $identifier, string $password): bool {
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && password_verify($password, $user['password_hash'])) {
             // Check account status
-            if (isset($user['status']) && $user['status'] !== 'active') {
-                flash('danger', 'Your account status is: ' . htmlspecialchars($user['status']) . '. Please contact support.');
+            if (isset($user['account_status']) && strtolower($user['account_status']) !== 'active') {
+                flash('danger', 'Your account status is: ' . htmlspecialchars($user['account_status']) . '. Please contact support.');
                 return false;
             }
 
@@ -74,7 +79,7 @@ function loginUser(string $identifier, string $password): bool {
             session_regenerate_id(true);
 
             // Update last login timestamp in DB
-            $updateStmt = $db->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+            $updateStmt = $db->prepare("UPDATE users SET last_login_at = NOW() WHERE id = :id");
             $updateStmt->execute([':id' => $user['id']]);
 
             // Save user session details
@@ -140,7 +145,15 @@ function getCurrentUser(): ?array {
 
     try {
         $db = Database::getInstance();
-        $stmt = $db->prepare("SELECT id, staff_id, full_name, email, role, department_code, status FROM users WHERE id = :id LIMIT 1");
+        $stmt = $db->prepare("
+            SELECT u.id, u.staff_id, u.email, u.account_status AS status,
+                   CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS full_name,
+                   r.role_code AS role, d.code AS department_code
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.id = :id LIMIT 1
+        ");
         $stmt->execute([':id' => $_SESSION['user_id']]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     } catch (PDOException $e) {

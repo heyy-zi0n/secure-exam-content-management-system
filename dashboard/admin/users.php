@@ -5,7 +5,16 @@ $breadcrumbs = ['Admin Dashboard' => url('dashboard/admin/index.php'), 'System U
 require_once __DIR__ . '/../../helpers/security_helper.php';
 requireRole('admin');
 $db = Database::getInstance();
-$users = $db->query("SELECT id, staff_id, full_name, email, role, department_code, status, last_login, created_at FROM users ORDER BY created_at DESC")->fetchAll();
+$users = $db->query("
+    SELECT u.id, u.staff_id, 
+           CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS full_name, 
+           u.email, LOWER(r.role_code) AS role, d.code AS department_code, 
+           LOWER(u.account_status) AS status, u.last_login_at AS last_login, u.created_at 
+    FROM users u
+    LEFT JOIN roles r ON u.role_id = r.id
+    LEFT JOIN departments d ON u.department_id = d.id
+    ORDER BY u.created_at DESC
+")->fetchAll();
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <div class="space-y-6">

@@ -65,9 +65,9 @@
 ✔ Professional error pages (401, 403, 404 & 500)
 ✔ Admin user management module
 ✔ Dashboard placeholders for upcoming modules
-✔ Notifications module placeholder
-✔ Profile module placeholder
-✔ Archive module placeholder
+✔ Notifications placeholder
+✔ Profile placeholder
+✔ Archive placeholder
 ✔ Authentication security improvements
 ✔ Runtime error fixes
 ✔ PHP syntax fixes across placeholder pages
@@ -81,9 +81,8 @@
 **Date:** 24 July 2026
 
 ### Completed
-✔ Enterprise database blueprint finalized and approved
-✔ MySQL enterprise database created (`lasu_exam_enterprise_db`)
-✔ Core academic database schema implemented
+✔ Enterprise database blueprint finalized
+✔ MySQL Enterprise Database created
 ✔ Departments table
 ✔ Roles table
 ✔ Academic Sessions table
@@ -93,11 +92,10 @@
 ✔ Foreign key constraints
 ✔ Database indexes
 ✔ Seed data for FCIT departments
-✔ Seed data for system roles
+✔ Seed data for user roles
 ✔ Seed data for academic sessions
 ✔ Seed data for semesters
 ✔ Seed data for academic levels
-✔ Successful deployment in phpMyAdmin
 ✔ Database validation completed
 
 ### Status
@@ -109,29 +107,51 @@
 **Date:** 24 July 2026
 
 ### Completed
-✔ Enterprise Users table
+✔ Users table
 ✔ Login History table
 ✔ Password Reset Tokens table
 ✔ User Sessions table
-✔ Role-to-User relationships
-✔ Department-to-User relationships
-✔ Primary key constraints
-✔ Foreign key constraints
-✔ Database indexes
-✔ Unique constraints
-✔ Password hashing support
-✔ Email verification support
-✔ Account status management
-✔ Failed login attempt tracking
-✔ Account lockout support
-✔ Force password change functionality
-✔ Remember Me token support
-✔ Secure password reset token hashing
-✔ Login history auditing
-✔ User session tracking
-✔ Enterprise user seed data
-✔ Comprehensive database integrity testing
-✔ Successful deployment and validation in phpMyAdmin
+✔ Enterprise authentication relationships
+✔ Role foreign-key relationships
+✔ Department foreign-key relationships
+✔ Security indexes
+✔ Enterprise seed users
+✔ Authentication data validation
+✔ Foreign key integrity testing
+✔ phpMyAdmin deployment testing
+
+### Status
+🟢 Stable
+
+---
+
+## v0.6 – Enterprise Database Migration & System Stabilization
+**Date:** 24 July 2026
+
+### Completed
+✔ Application successfully migrated from the legacy development database to the Enterprise Database
+✔ Database connection updated to use the Enterprise schema
+✔ Refactored SQL queries to support the normalized database structure
+✔ Updated authentication to use the Enterprise Users table
+✔ Updated dashboards to align with the new schema
+✔ Updated shared components (Header, Sidebar, Topbar, Alerts & Breadcrumbs)
+✔ Updated role-based navigation
+✔ Updated Admin module queries
+✔ Updated HOD module queries
+✔ Updated Lecturer module queries
+✔ Updated Moderator module queries
+✔ Updated Exam Officer module queries
+✔ Fixed runtime SQL errors caused by legacy table references
+✔ Replaced unavailable future-module queries with safe placeholders
+✔ Added reusable "Coming Soon" pages for modules scheduled for future versions
+✔ Added support for multiple Academic Sessions
+✔ Improved Academic Session management for future scalability
+✔ Enterprise database compatibility verified
+✔ Login system validated after migration
+✔ Dashboard functionality validated
+✔ Activity logging validated
+✔ System-wide migration testing completed
+✔ Overall application stabilized after migration
 
 ### Status
 🟢 Stable
@@ -147,103 +167,36 @@
 - ✅ v0.3 – Role-Based Access Control (RBAC)
 - ✅ v0.4 – Enterprise Database Architecture (Phase 1)
 - ✅ v0.5 – Enterprise Database Architecture (Phase 2)
+- ✅ v0.6 – Enterprise Database Migration & System Stabilization
 
 ---
 
 # Next Milestone
 
-## 🔄 v0.6 – Academic Management Database
+## 🔄 v0.7 – Examination Workflow Management
 
 ### Planned
 
-#### Academic Structure
-✔ Courses
-✔ Course Categories (if required)
-✔ Course Status Management
+✔ Examination Papers
 
-#### Lecturer Management
-✔ Lecturer Course Assignments
-✔ Cross-Department Lecturer Assignments
-✔ Teaching Load Management
+✔ Question Submission
 
-#### Moderation Management
-✔ Moderator Assignments
-✔ Department-based Moderation
-✔ Level-based Moderation
+✔ Paper Versioning
 
-#### Academic Relationships
-✔ Session Relationships
-✔ Semester Relationships
-✔ Level Relationships
-✔ Department Relationships
+✔ Lecturer Draft Management
 
-#### Data Integrity
-✔ Foreign Key Constraints
-✔ Database Indexes
-✔ Sample Course Seed Data
-✔ Validation Testing
+✔ Moderator Review Workflow
+
+✔ Review Comments
+
+✔ HOD Approval Workflow
+
+✔ Paper Status Tracking
+
+✔ Examination Workflow History
+
+✔ Secure Examination Lifecycle Foundation
 
 ### Status
+
 🟡 In Progress
-
----
-
-# Upcoming Roadmap
-
-## v0.6 – Academic Management Database
-- Courses
-- Lecturer Course Assignment
-- Moderator Assignment
-- Academic Relationships
-
-## v0.7 – Examination Workflow Database
-- Examination Papers
-- Paper Versions
-- Moderation Comments
-- Workflow History
-- Submission Pipeline
-- Approval Pipeline
-
-## v0.8 – Security & Blind Lockdown
-- Blind Lockdown Engine
-- AES-256 Encryption Metadata
-- Secure Viewing
-- Dynamic Watermarking
-- Security Logs
-- Audit Trail
-
-## v0.9 – Secure Printing & Archive
-- Examination Schedule
-- Print Requests
-- Print Jobs
-- Print Authorization
-- Archive Management
-- Reports
-- Notifications
-
-## v1.0 – Final System Release
-- Complete System Integration
-- Full Module Testing
-- Performance Optimization
-- Security Hardening
-- Bug Fixes
-- Final Documentation
-- Deployment Package
-- Project Defense Version
-
----
-
-## Overall Project Progress
-
-| Version | Module | Status |
-|---------|--------|--------|
-| v0.1 | Project Foundation | ✅ Stable |
-| v0.2 | Authentication Foundation | ✅ Stable |
-| v0.3 | Role-Based Access Control (RBAC) | ✅ Stable |
-| v0.4 | Enterprise Database Architecture (Phase 1) | ✅ Stable |
-| v0.5 | Enterprise Database Architecture (Phase 2) | ✅ Stable |
-| v0.6 | Academic Management Database | 🔄 In Progress |
-| v0.7 | Examination Workflow Database | ⏳ Planned |
-| v0.8 | Security & Blind Lockdown | ⏳ Planned |
-| v0.9 | Secure Printing & Archive | ⏳ Planned |
-| v1.0 | Final Release | ⏳ Planned |

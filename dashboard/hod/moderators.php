@@ -27,15 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             // Check if this moderator is already assigned to this level for the session
             $chk = $db->prepare("
-                SELECT id FROM moderator_level_assignments 
-                WHERE department_code = :dept 
-                  AND level = :level 
-                  AND academic_session_id = :sess_id
+                SELECT ma.id FROM moderator_assignments ma
+                JOIN departments d ON ma.department_id = d.id
+                JOIN levels l ON ma.level_id = l.id
+                WHERE d.code = :dept 
+                  AND l.level_code = :level 
+                  AND ma.academic_session_id = :sess_id
                 LIMIT 1
             ");
             $chk->execute([
                 ':dept'    => $dept,
-                ':level'   => $level,
+                ':level'   => (string)$level,
                 ':sess_id' => $sessionId
             ]);
             
@@ -43,18 +45,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $error = "A moderator is already allocated to {$level} Level in this department for the selected session. Remove that assignment first to reallocate.";
             } else {
                 $ins = $db->prepare("
-                    INSERT INTO moderator_level_assignments (moderator_id, department_code, level, academic_session_id)
-                    VALUES (:mod_id, :dept, :level, :sess_id)
+                    INSERT INTO moderator_assignments (moderator_id, department_id, level_id, academic_session_id, assigned_by)
+                    SELECT :mod_id, d.id, l.id, :sess_id, :assigned_by
+                    FROM departments d, levels l
+                    WHERE d.code = :dept AND l.level_code = :level
                 ");
                 $ins->execute([
-                    ':mod_id'  => $modId,
-                    ':dept'    => $dept,
-                    ':level'   => $level,
-                    ':sess_id' => $sessionId
+                    ':mod_id'      => $modId,
+                    ':sess_id'     => $sessionId,
+                    ':assigned_by' => $user['id'],
+                    ':dept'        => $dept,
+                    ':level'       => (string)$level
                 ]);
                 
                 $modEmail = $db->query("SELECT email FROM users WHERE id = $modId")->fetchColumn();
-                logAudit('Moderator Allocated', "Allocated moderator $modEmail to $level Level for session ID $sessionId");
+                logAudit('Moderator Allocated', "Allocated moderator $modEmail to {$level} Level for session ID $sessionId");
                 $success = "Moderator allocated to {$level} Level successfully.";
             }
         }
@@ -70,16 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         // Fetch info before delete for logging
         $infoStmt = $db->prepare("
-            SELECT mla.*, u.email 
-            FROM moderator_level_assignments mla 
-            JOIN users u ON mla.moderator_id = u.id 
-            WHERE mla.id = :id AND mla.department_code = :dept
+            SELECT ma.*, l.level_code AS level, u.email 
+            FROM moderator_assignments ma
+            JOIN users u ON ma.moderator_id = u.id
+            JOIN departments d ON ma.department_id = d.id
+            JOIN levels l ON ma.level_id = l.id
+            WHERE ma.id = :id AND d.code = :dept
         ");
         $infoStmt->execute([':id' => $allocId, ':dept' => $dept]);
         $info = $infoStmt->fetch();
         
         if ($info) {
-            $del = $db->prepare("DELETE FROM moderator_level_assignments WHERE id = :id");
+            $del = $db->prepare("DELETE FROM moderator_assignments WHERE id = :id");
             $del->execute([':id' => $allocId]);
             
             logAudit('Moderator Deallocated', "Removed moderator {$info['email']} from {$info['level']} Level allocation.");
@@ -92,23 +99,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Fetch Active Moderator Assignments in HOD Department
 $mlaStmt = $db->prepare("
-    SELECT mla.*, u.full_name as moderator_name, u.email as moderator_email, s.name as session_name
-    FROM moderator_level_assignments mla
-    JOIN users u ON mla.moderator_id = u.id
-    JOIN academic_sessions s ON mla.academic_session_id = s.id
-    WHERE mla.department_code = :dept
-    ORDER BY mla.level ASC
+    SELECT ma.id, l.level_code AS level,
+           CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS moderator_name,
+           u.email AS moderator_email, s.session_name AS session_name
+    FROM moderator_assignments ma
+    JOIN users u ON ma.moderator_id = u.id
+    JOIN departments d ON ma.department_id = d.id
+    JOIN levels l ON ma.level_id = l.id
+    JOIN academic_sessions s ON ma.academic_session_id = s.id
+    WHERE d.code = :dept
+    ORDER BY l.level_code ASC
 ");
 $mlaStmt->execute([':dept' => $dept]);
 $allocations = $mlaStmt->fetchAll();
 
-// Fetch Department Moderators (only role = moderator from HOD's department)
-$modStmt = $db->prepare("SELECT id, full_name, email FROM users WHERE role = 'moderator' AND department_code = :dept ORDER BY full_name ASC");
+// Fetch Department Moderators
+$modStmt = $db->prepare("
+    SELECT u.id, CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name) AS full_name, u.email
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    JOIN departments d ON u.department_id = d.id
+    WHERE r.role_code = 'moderator' AND d.code = :dept
+    ORDER BY u.first_name ASC
+");
 $modStmt->execute([':dept' => $dept]);
 $moderators = $modStmt->fetchAll();
 
 // Fetch Sessions
-$sessions = $db->query("SELECT * FROM academic_sessions ORDER BY name DESC")->fetchAll();
+$sessions = $db->query("SELECT id, session_name AS name, is_current FROM academic_sessions ORDER BY session_name DESC")->fetchAll();
+$defaultSessionId = null;
+foreach ($sessions as $s) {
+    if ($s['is_current']) {
+        $defaultSessionId = $s['id'];
+        break;
+    }
+}
+if (!$defaultSessionId && !empty($sessions)) {
+    $defaultSessionId = $sessions[0]['id'];
+}
 ?>
 
 <div class="space-y-6">
@@ -174,7 +202,9 @@ $sessions = $db->query("SELECT * FROM academic_sessions ORDER BY name DESC")->fe
                             <select name="session_id" required
                                     class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 <?php foreach ($sessions as $s): ?>
-                                    <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['name']) ?></option>
+                                    <option value="<?= $s['id'] ?>" <?= $defaultSessionId == $s['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($s['name']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

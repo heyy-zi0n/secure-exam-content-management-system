@@ -17,18 +17,13 @@ $user = currentUser();
 // Live DB counts
 $totalUsers    = (int) $db->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalDepts    = (int) $db->query("SELECT COUNT(*) FROM departments")->fetchColumn();
-$totalPapers   = (int) $db->query("SELECT COUNT(*) FROM examination_papers")->fetchColumn();
-$activeSession = $db->query("SELECT COUNT(*) FROM academic_sessions WHERE status = 'active'")->fetchColumn();
-$securityEvents= (int) $db->query("SELECT COUNT(*) FROM security_events WHERE DATE(created_at) = CURDATE()")->fetchColumn();
-$auditToday    = (int) $db->query("SELECT COUNT(*) FROM audit_logs WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+$totalPapers   = 0; // TODO: migrate examination_papers
+$activeSession = (int) $db->query("SELECT COUNT(*) FROM academic_sessions WHERE is_current = 1")->fetchColumn();
+$securityEvents= 0; // TODO: migrate security_events
+$auditToday    = 0; // TODO: migrate audit_logs
 
 // Recent audit entries
-$recentAudit = $db->query("
-    SELECT al.action, al.description, al.created_at, u.full_name, u.role
-    FROM audit_logs al
-    LEFT JOIN users u ON al.user_id = u.id
-    ORDER BY al.created_at DESC LIMIT 8
-")->fetchAll();
+$recentAudit = []; // TODO: migrate audit_logs
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>
@@ -79,6 +74,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <h2 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Quick Access</h2>
             <?php
             $modules = [
+                ['title' => 'Academic Sessions', 'desc' => 'Manage academic sessions and semesters.',    'icon' => '📅', 'url' => url('dashboard/admin/sessions.php'),    'color' => 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800'],
                 ['title' => 'System Users',    'desc' => 'Manage accounts, roles, and status.',         'icon' => '👤', 'url' => url('dashboard/admin/users.php'),    'color' => 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'],
                 ['title' => 'Departments',     'desc' => 'Configure FCIT department structure.',         'icon' => '🏢', 'url' => url('dashboard/admin/departments.php'), 'color' => 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800'],
                 ['title' => 'Security Logs',   'desc' => 'Monitor security incidents and events.',       'icon' => '🔒', 'url' => url('dashboard/admin/logs.php'),    'color' => 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800'],

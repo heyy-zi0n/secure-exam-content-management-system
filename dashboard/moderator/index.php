@@ -14,11 +14,12 @@ $homeDept = $user['department_code'];
 
 // 1. Fetch moderator level allocations
 $mlaStmt = $db->prepare("
-    SELECT mla.*, d.name as department_name, s.name as session_name
-    FROM moderator_level_assignments mla
-    JOIN departments d ON mla.department_code = d.code
-    JOIN academic_sessions s ON mla.academic_session_id = s.id
-    WHERE mla.moderator_id = :mod_id
+    SELECT ma.*, d.name AS department_name, d.code AS department_code, l.level_code AS level, s.session_name
+    FROM moderator_assignments ma
+    JOIN departments d ON ma.department_id = d.id
+    JOIN levels l ON ma.level_id = l.id
+    JOIN academic_sessions s ON ma.academic_session_id = s.id
+    WHERE ma.moderator_id = :mod_id
 ");
 $mlaStmt->execute([':mod_id' => $modId]);
 $allocations = $mlaStmt->fetchAll();
@@ -33,62 +34,16 @@ foreach ($allocations as $alloc) {
 $allocatedLevels = array_unique($allocatedLevels);
 $allocatedDepts = array_unique($allocatedDepts);
 
-// 2. Metrics Queries
-$pendingCount = 0;
-if (!empty($allocations)) {
-    // Generate placeholders for departments and levels
-    $pendingQuery = "
-        SELECT COUNT(DISTINCT ep.id) 
-        FROM examination_papers ep
-        JOIN moderator_level_assignments mla 
-          ON ep.department_code = mla.department_code 
-         AND ep.level = mla.level 
-         AND ep.academic_session_id = mla.academic_session_id
-        WHERE mla.moderator_id = :mod_id 
-          AND ep.status IN ('Submitted', 'Re-Submitted', 'Under Review')
-    ";
-    $pendingStmt = $db->prepare($pendingQuery);
-    $pendingStmt->execute([':mod_id' => $modId]);
-    $pendingCount = $pendingStmt->fetchColumn();
-}
+// 2. Metrics — disabled until examination_papers and approval_records are migrated
+$pendingCount  = 0; // TODO: examination_papers
+$approvedCount = 0; // TODO: approval_records
+$returnedCount = 0; // TODO: examination_papers
 
-$approvedCount = $db->query("SELECT COUNT(*) FROM approval_records WHERE moderator_id = $modId")->fetchColumn();
-$returnedCount = $db->query("SELECT COUNT(*) FROM examination_papers WHERE assigned_moderator_id = $modId AND status = 'Correction Requested'")->fetchColumn();
+// 3. Pending papers list — disabled until examination_papers migrated
+$pendingPapers = []; // TODO: examination_papers
 
-// 3. Pending papers list
-$pendingPapers = [];
-if (!empty($allocations)) {
-    $listStmt = $db->prepare("
-        SELECT DISTINCT ep.*, c.course_code, c.course_title, u.full_name as lecturer_name, d.name as department_name
-        FROM examination_papers ep
-        JOIN courses c ON ep.course_id = c.id
-        JOIN users u ON ep.created_by = u.id
-        JOIN departments d ON ep.department_code = d.code
-        JOIN moderator_level_assignments mla 
-          ON ep.department_code = mla.department_code 
-         AND ep.level = mla.level 
-         AND ep.academic_session_id = mla.academic_session_id
-        WHERE mla.moderator_id = :mod_id 
-          AND ep.status IN ('Submitted', 'Re-Submitted', 'Under Review')
-        ORDER BY ep.updated_at DESC LIMIT 5
-    ");
-    $listStmt->execute([':mod_id' => $modId]);
-    $pendingPapers = $listStmt->fetchAll();
-}
-
-// 4. Live activity feed for moderator actions
-$logStmt = $db->prepare("
-    SELECT al.* 
-    FROM audit_logs al
-    WHERE al.user_id = :id 
-       OR (al.action = 'Paper Approved' AND al.description LIKE :desc)
-    ORDER BY al.created_at DESC LIMIT 5
-");
-$logStmt->execute([
-    ':id' => $modId,
-    ':desc' => "%ID: %"
-]);
-$activities = $logStmt->fetchAll();
+// 4. Activity feed — disabled until audit_logs migrated
+$activities = []; // TODO: audit_logs
 ?>
 
 <div class="space-y-6">
