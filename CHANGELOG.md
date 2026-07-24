@@ -97,6 +97,40 @@
 ✔ Seed data for academic sessions
 ✔ Seed data for semesters
 ✔ Seed data for academic levels
+✔ Successful deployment in phpMyAdmin
+✔ Database validation completed
+
+### Status
+🟢 Stable
+
+---
+
+## v0.5 – Enterprise Database Architecture (Phase 2)
+**Date:** 24 July 2026
+
+### Completed
+✔ Enterprise Users table
+✔ Login History table
+✔ Password Reset Tokens table
+✔ User Sessions table
+✔ Role-to-User relationships
+✔ Department-to-User relationships
+✔ Primary key constraints
+✔ Foreign key constraints
+✔ Database indexes
+✔ Unique constraints
+✔ Password hashing support
+✔ Email verification support
+✔ Account status management
+✔ Failed login attempt tracking
+✔ Account lockout support
+✔ Force password change functionality
+✔ Remember Me token support
+✔ Secure password reset token hashing
+✔ Login history auditing
+✔ User session tracking
+✔ Enterprise user seed data
+✔ Comprehensive database integrity testing
 ✔ Successful deployment and validation in phpMyAdmin
 
 ### Status
@@ -112,35 +146,104 @@
 - ✅ v0.2 – Authentication Foundation
 - ✅ v0.3 – Role-Based Access Control (RBAC)
 - ✅ v0.4 – Enterprise Database Architecture (Phase 1)
+- ✅ v0.5 – Enterprise Database Architecture (Phase 2)
 
 ---
 
 # Next Milestone
 
-## 🔄 v0.5 – Enterprise Database Architecture (Phase 2)
+## 🔄 v0.6 – Academic Management Database
 
 ### Planned
 
-✔ Users table
+#### Academic Structure
+✔ Courses
+✔ Course Categories (if required)
+✔ Course Status Management
 
-✔ User Profiles
+#### Lecturer Management
+✔ Lecturer Course Assignments
+✔ Cross-Department Lecturer Assignments
+✔ Teaching Load Management
 
-✔ Login History
+#### Moderation Management
+✔ Moderator Assignments
+✔ Department-based Moderation
+✔ Level-based Moderation
 
-✔ Password Reset Tokens
-
-✔ User Sessions
-
-✔ User Account Security
-
-✔ Role Relationships
-
+#### Academic Relationships
+✔ Session Relationships
+✔ Semester Relationships
+✔ Level Relationships
 ✔ Department Relationships
 
-✔ Authentication Indexes
-
-✔ Initial User Seed Data
+#### Data Integrity
+✔ Foreign Key Constraints
+✔ Database Indexes
+✔ Sample Course Seed Data
+✔ Validation Testing
 
 ### Status
-
 🟡 In Progress
+
+---
+
+# Upcoming Roadmap
+
+## v0.6 – Academic Management Database
+- Courses
+- Lecturer Course Assignment
+- Moderator Assignment
+- Academic Relationships
+
+## v0.7 – Examination Workflow Database
+- Examination Papers
+- Paper Versions
+- Moderation Comments
+- Workflow History
+- Submission Pipeline
+- Approval Pipeline
+
+## v0.8 – Security & Blind Lockdown
+- Blind Lockdown Engine
+- AES-256 Encryption Metadata
+- Secure Viewing
+- Dynamic Watermarking
+- Security Logs
+- Audit Trail
+
+## v0.9 – Secure Printing & Archive
+- Examination Schedule
+- Print Requests
+- Print Jobs
+- Print Authorization
+- Archive Management
+- Reports
+- Notifications
+
+## v1.0 – Final System Release
+- Complete System Integration
+- Full Module Testing
+- Performance Optimization
+- Security Hardening
+- Bug Fixes
+- Final Documentation
+- Deployment Package
+- Project Defense Version
+
+---
+
+## Overall Project Progress
+
+| Version | Module | Status |
+|---------|--------|--------|
+| v0.1 | Project Foundation | ✅ Stable |
+| v0.2 | Authentication Foundation | ✅ Stable |
+| v0.3 | Role-Based Access Control (RBAC) | ✅ Stable |
+| v0.4 | Enterprise Database Architecture (Phase 1) | ✅ Stable |
+| v0.5 | Enterprise Database Architecture (Phase 2) | ✅ Stable |
+| v0.6 | Academic Management Database | 🔄 In Progress |
+| v0.7 | Examination Workflow Database | ⏳ Planned |
+| v0.8 | Security & Blind Lockdown | ⏳ Planned |
+| v0.9 | Secure Printing & Archive | ⏳ Planned |
+| v1.0 | Final Release | ⏳ Planned |
