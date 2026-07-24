@@ -8,9 +8,11 @@ require_once __DIR__ . '/../config/session.php';
 /**
  * Sanitize raw string input against XSS
  */
-function sanitizeInput(mixed $data): string {
-    if (is_null($data)) return '';
-    return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
+if (!function_exists('sanitizeInput')) {
+    function sanitizeInput(mixed $data): string {
+        if (is_null($data)) return '';
+        return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
+    }
 }
 
 /**

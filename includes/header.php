@@ -1,5 +1,11 @@
 <?php
 require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../helpers/auth_helper.php';
+require_once __DIR__ . '/../config/database.php';
+
+if (!isset($noAuthRequired) || !$noAuthRequired) {
+    requireAuth(); // Require login across protected dashboard views
+}
 $pageTitle = $pageTitle ?? 'Dashboard';
 ?>
 <!DOCTYPE html>
@@ -27,12 +33,17 @@ $pageTitle = $pageTitle ?? 'Dashboard';
                     },
                     colors: {
                         brand: {
-                            50: '#eff6ff',
+                            50:  '#eff6ff',
                             100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
                             500: '#3b82f6',
                             600: '#2563eb',
                             700: '#1d4ed8',
+                            800: '#1e40af',
                             900: '#1e3a8a',
+                            950: '#172554',
                         }
                     }
                 }
@@ -52,30 +63,14 @@ $pageTitle = $pageTitle ?? 'Dashboard';
 </head>
 <body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 theme-transition antialiased font-sans">
     <div class="min-h-full flex flex-col">
-        <!-- Top Navigation Bar -->
-        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <img src="<?= url('assets/images/lasu-logo.png') ?>" alt="LASU Logo" class="h-10 w-auto object-contain">
-                    <div>
-                        <span class="text-lg font-bold text-slate-900 dark:text-white block leading-tight"><?= APP_SHORT_NAME ?></span>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:block"><?= FACULTY_NAME ?></span>
-                    </div>
-                </div>
+        <!-- Dynamic Top Navigation -->
+        <?php include __DIR__ . '/topbar.php'; ?>
 
-                <div class="flex items-center space-x-4">
-                    <!-- Light / Dark Theme Toggle Button -->
-                    <button id="theme-toggle" type="button" class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                        </svg>
-                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </header>
+        <!-- Layout Body: Sidebar + Main Content -->
+        <div class="flex-1 flex w-full overflow-hidden">
+            <?php include __DIR__ . '/sidebar.php'; ?>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Main Content Area -->
+            <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <?php include __DIR__ . '/breadcrumbs.php'; ?>
+                <?php include __DIR__ . '/alerts.php'; ?>

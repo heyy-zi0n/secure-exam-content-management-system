@@ -1,5 +1,38 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Load Auth Helper functions safely
+require_once __DIR__ . '/helpers/auth_helper.php';
+
+// Auto-redirect logged-in users ONLY if they have a valid dashboard path
+if (isLoggedIn()) {
+    $userRole = currentUser()['role'] ?? '';
+    $dashboardPath = getRoleDashboardPath($userRole);
+    
+    // Only redirect if a real dashboard path exists and it isn't pointing to login
+    if (!empty($dashboardPath) && $dashboardPath !== 'auth/login.php') {
+        header("Location: " . url($dashboardPath));
+        exit;
+    }
+}
+
 $pageTitle = "Welcome - FCIT Exam Portal";
+
+// Fallback constant check for FCIT departments to prevent crash if config is not pre-loaded
+if (!defined('FCIT_DEPARTMENTS')) {
+    define('FCIT_DEPARTMENTS', [
+        'CSC' => 'Computer Science',
+        'INF' => 'Information Technology',
+        'INS' => 'Information Systems',
+        'CYB' => 'Cybersecurity',
+        'SWE' => 'Software Engineering'
+    ]);
+}
+
+$noAuthRequired = true;
+$noSidebar = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -38,7 +71,7 @@ require_once __DIR__ . '/includes/header.php';
                 <!-- Fast Stats / Indicators -->
                 <div class="pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-4 text-left">
                     <div>
-                        <span class="block text-2xl font-extrabold text-slate-900 dark:text-white">5</span>
+                        <span class="block text-2xl font-extrabold text-slate-900 dark:text-white"><?= count(FCIT_DEPARTMENTS) ?></span>
                         <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Departments</span>
                     </div>
                     <div>
@@ -130,16 +163,16 @@ require_once __DIR__ . '/includes/header.php';
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-10">
             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Faculty Departments</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Independent examination pipelines across all 5 FCIT departments</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Independent examination pipelines across all FCIT departments</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <?php foreach (FCIT_DEPARTMENTS as $code => $name): ?>
                 <div class="p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand-500 transition-all group">
                     <div class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-extrabold text-xs flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                        <?= $code ?>
+                        <?= htmlspecialchars($code) ?>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-snug"><?= $name ?></h3>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-snug"><?= htmlspecialchars($name) ?></h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2">Dedicated HOD & Exam Officer workflows</p>
                 </div>
             <?php endforeach; ?>

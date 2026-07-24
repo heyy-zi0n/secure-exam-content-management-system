@@ -1,5 +1,7 @@
 <?php
 $pageTitle = "Module 1 - Setup Verification";
+$noAuthRequired = true;
+$noSidebar = true;
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/config/database.php';
 
