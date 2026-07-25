@@ -9,6 +9,9 @@ try {
     
     // Truncate all tables to avoid duplicates
     $tables = [
+        'paper_files',
+        'paper_versions',
+        'examination_papers',
         'moderator_assignments',
         'lecturer_course_assignments',
         'courses',
@@ -409,6 +412,243 @@ try {
     
     echo "[+] Seeded moderator assignments!\n";
     
+    // --- 10. Seed Examination Papers ---
+    $lecCscId = $userIdMap['FCIT/LEC/CSC'];
+    $lecSweId = $userIdMap['FCIT/LEC/SWE'];
+    
+    // Get dept ids
+    $deptIds = [];
+    $deptStmt = $db->query("SELECT id, code FROM departments");
+    foreach ($deptStmt->fetchAll() as $d) {
+        $deptIds[$d['code']] = $d['id'];
+    }
+    
+    // Get level ids (by name)
+    $levelIdsByName = [];
+    $lvlStmt = $db->query("SELECT id, level_code FROM levels");
+    foreach ($lvlStmt->fetchAll() as $l) {
+        $levelIdsByName[$l['level_code']] = $l['id'];
+    }
+    
+    $paperStmt = $db->prepare("
+        INSERT INTO examination_papers 
+        (course_id, lecturer_id, academic_session_id, semester_id, department_id, level_id, 
+         examination_type, paper_title, instructions, duration_minutes, total_marks, 
+         submission_status, current_version) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    
+    // Helper: get course details by code
+    $courseDetailsStmt = $db->prepare("
+        SELECT c.id, c.department_id, c.level_id, c.semester_id, c.academic_session_id
+        FROM courses c WHERE c.course_code = ? LIMIT 1
+    ");
+    
+    function seedPaper($paperStmt, $courseDetailsStmt, $courseCode, $lecturerId, $examType, $title, $instructions, $duration, $marks, $status, $version, $deptIds, $levelIdsByName) {
+        $courseDetailsStmt->execute([$courseCode]);
+        $c = $courseDetailsStmt->fetch();
+        if (!$c) return;
+        $paperStmt->execute([
+            $c['id'],
+            $lecturerId,
+            $c['academic_session_id'],
+            $c['semester_id'],
+            $c['department_id'],
+            $c['level_id'],
+            $examType,
+            $title,
+            $instructions,
+            $duration,
+            $marks,
+            $status,
+            $version
+        ]);
+    }
+    
+    // CSC Lecturer papers
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'CSC101', $lecCscId,
+        'Final Examination',
+        'CSC101 Final Examination - First Semester 2025/2026',
+        "Instructions:\n1. Answer ALL questions in Section A and any TWO (2) questions in Section B.\n2. Use of calculators is permitted.\n3. All questions carry equal marks unless otherwise stated.\n4. Write your matriculation number on every answer sheet provided.",
+        180, 100, 'Draft', 1, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: CSC101 Draft\n";
+    
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'CSC221', $lecCscId,
+        'Mid Semester Test',
+        'CSC221 Mid-Semester Test - Introduction to AI',
+        "Instructions:\n1. Answer ALL questions.\n2. Time allowed: 1 hour.\n3. Write legibly and use black or blue ink only.",
+        60, 30, 'Submitted', 1, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: CSC221 Submitted\n";
+    
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'CSC410', $lecCscId,
+        'Final Examination',
+        'CSC410 Compiler Construction - Final Exam',
+        "Instructions:\n1. Answer Question 1 (COMPULSORY) and any other THREE questions.\n2. Each question in Section A carries 25 marks.\n3. Show all workings clearly.",
+        180, 100, 'Returned', 2, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: CSC410 Returned\n";
+    
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'SWE203', $lecCscId,
+        'Continuous Assessment',
+        'SWE203 Continuous Assessment II - Requirements Engineering',
+        "Instructions:\n1. This is an open-book assessment.\n2. Submit your answers as a single PDF document.\n3. Plagiarism will be severely penalized.",
+        120, 40, 'Draft', 1, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: SWE203 (CSC Lecturer) Draft\n";
+    
+    // SWE Lecturer papers
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'SWE203', $lecSweId,
+        'Final Examination',
+        'SWE203 Final Examination - Software Requirements Engineering',
+        "Instructions:\n1. Section A is compulsory (40 marks).\n2. Answer any THREE questions from Section B (20 marks each).\n3. Total: 100 marks. Time: 3 hours.",
+        180, 100, 'Approved', 2, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: SWE203 (SWE Lecturer) Approved\n";
+    
+    seedPaper(
+        $paperStmt, $courseDetailsStmt, 'SWE312', $lecSweId,
+        'Practical',
+        'SWE312 Practical Test - Software Architecture & Design',
+        "Instructions:\n1. This practical test consists of 2 tasks.\n2. Complete all tasks within the given time.\n3. Submit your design diagrams and source code via the provided portal.",
+        90, 50, 'Submitted', 1, $deptIds, $levelIdsByName
+    );
+    echo "[+] Seeded paper: SWE312 Practical Submitted\n";
+
+    // --- 11. Seed Paper Versions and Paper Files (v0.7.1) ---
+    require_once __DIR__ . '/../config/constants.php';
+
+    $storageDirs = [
+        EXAM_STORAGE_PATH_DRAFT, EXAM_STORAGE_PATH_SUBMIT, EXAM_STORAGE_PATH_APPRV, EXAM_STORAGE_PATH_ARCH
+    ];
+    foreach ($storageDirs as $d) {
+        if (!is_dir($d)) @mkdir($d, 0777, true);
+    }
+    if (!file_exists(EXAM_STORAGE_PATH . '/.htaccess')) {
+        @file_put_contents(EXAM_STORAGE_PATH . '/.htaccess', "Require all denied\nOptions -Indexes\n");
+    }
+
+    $versionStmt = $db->prepare("
+        INSERT INTO paper_versions
+        (examination_paper_id, version_number, created_by, submission_status, change_notes, created_at)
+        VALUES (?, ?, ?, ?, ?, NOW())
+    ");
+    $fileStmt = $db->prepare("
+        INSERT INTO paper_files
+        (paper_version_id, file_type, original_filename, generated_filename, file_extension,
+         mime_type, file_size, sha256_hash, storage_path, uploaded_by, uploaded_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    ");
+
+    function seedDummyFile(string $bucketDir, string $genName, string $ext): array {
+        $path = rtrim($bucketDir, '/') . '/' . $genName;
+        if ($ext === 'pdf') {
+            // Minimal valid PDF 91 bytes
+            $content = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\nxref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n9\n%%EOF\n";
+            $mime = 'application/pdf';
+        } elseif ($ext === 'docx' || $ext === 'zip') {
+            // Minimal valid ZIP 22 bytes (PK header + empty EOCD)
+            $content = "PK\x03\x04" . str_repeat("\x00", 14) . "PK\x05\x06" . str_repeat("\x00", 18);
+            $mime = $ext === 'docx'
+                ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                : 'application/zip';
+        } else {
+            $content = "Placeholder\n";
+            $mime = 'application/octet-stream';
+        }
+        @file_put_contents($path, $content);
+        @chmod($path, 0640);
+        return [
+            'size'    => filesize($path) ?: strlen($content),
+            'sha256'  => hash('sha256', $content),
+            'mime'    => $mime,
+            'path'    => $path
+        ];
+    }
+
+    $map = [
+        // [paper_id, paper_title, status, version, lecturer_id, course_code, exam_type, session, semester]
+        [1,  'CSC101 Final Examination',       'Draft',     1, $lecCscId, 'CSC101', 'Final Examination',       '2025/2026', 'First'],
+        [2,  'CSC221 Mid-Semester Test',       'Submitted', 1, $lecCscId, 'CSC221', 'Mid Semester Test',       '2025/2026', 'First'],
+        [3,  'CSC410 Compiler Construction',   'Returned',  1, $lecCscId, 'CSC410', 'Final Examination',       '2025/2026', 'First'],
+        [3,  'CSC410 Compiler Construction',   'Returned',  2, $lecCscId, 'CSC410', 'Final Examination',       '2025/2026', 'First'],
+        [4,  'SWE203 Continuous Assessment',   'Draft',     1, $lecCscId, 'SWE203', 'Continuous Assessment',   '2025/2026', 'First'],
+        [5,  'SWE203 Software Requirements',   'Approved',  1, $lecSweId, 'SWE203', 'Final Examination',       '2025/2026', 'First'],
+        [5,  'SWE203 Software Requirements',   'Approved',  2, $lecSweId, 'SWE203', 'Final Examination',       '2025/2026', 'First'],
+        [6,  'SWE312 Practical Test',          'Submitted', 1, $lecSweId, 'SWE312', 'Practical',               '2025/2026', 'First'],
+    ];
+
+    $statusNotes = [
+        1 => null,
+        2 => 'Corrections applied per review feedback; restructured Q1-Q3.',
+        3 => 'Initial draft prior to moderation review.',
+        4 => null,
+    ];
+
+    $examToSlug = [
+        'Mid Semester Test'     => 'MidSemesterTest',
+        'Continuous Assessment' => 'ContinuousAssessment',
+        'Practical'             => 'Practical',
+        'Final Examination'     => 'FinalExam',
+        'Supplementary Examination' => 'SupplementaryExam',
+    ];
+    $typeToAbbr = [
+        'Question Paper'            => 'QUESTION',
+        'Marking Scheme'            => 'MARKING',
+        'Practical Resources'       => 'PRACTICAL',
+        'Additional Instructions'   => 'INSTRUCTIONS',
+    ];
+
+    foreach ($map as $row) {
+        [$paperId, $paperTitle, $status, $version, $lecturerId, $courseCode, $examType, $session, $semester] = $row;
+
+        $changeNotes = $version > 1 ? ($statusNotes[$paperId] ?? null) : null;
+        $versionStmt->execute([$paperId, $version, $lecturerId, $status, $changeNotes]);
+        $versionId = (int)$db->lastInsertId();
+
+        $bucket = $status === 'Submitted' ? EXAM_STORAGE_PATH_SUBMIT
+                : ($status === 'Approved' ? EXAM_STORAGE_PATH_APPRV
+                : EXAM_STORAGE_PATH_DRAFT);
+
+        $examSlug = $examToSlug[$examType] ?? 'Exam';
+        $semSlug  = $semester . 'Semester';
+        $sesSlug  = str_replace('/', '-', $session);
+
+        $filesForPaper = [];
+        if ($examType === 'Practical') {
+            $filesForPaper[] = ['Question Paper', 'docx'];
+            $filesForPaper[] = ['Practical Resources', 'zip'];
+        } elseif ($examType === 'Continuous Assessment') {
+            $filesForPaper[] = ['Question Paper', 'pdf'];
+            $filesForPaper[] = ['Additional Instructions', 'docx'];
+        } else {
+            $filesForPaper[] = ['Question Paper', 'docx'];
+            if ($version === 2 || in_array($status, ['Submitted','Approved','Returned'], true)) {
+                $filesForPaper[] = ['Marking Scheme', 'pdf'];
+            }
+        }
+
+        foreach ($filesForPaper as $fp) {
+            [$fileType, $ext] = $fp;
+            $abbr = $typeToAbbr[$fileType];
+            $gen  = "{$courseCode}_{$sesSlug}_{$semSlug}_{$examSlug}_V{$version}_{$abbr}.{$ext}";
+            $info = seedDummyFile($bucket, $gen, $ext);
+            $orig = $fileType . ' - ' . $courseCode . ' v' . $version . '.' . $ext;
+            $fileStmt->execute([
+                $versionId, $fileType, $orig, $gen, $ext,
+                $info['mime'], $info['size'], $info['sha256'], $info['path'], $lecturerId
+            ]);
+        }
+        echo "[+] Seeded paper_version #$versionId (paper #$paperId v$version $status) with "
+             . count($filesForPaper) . " file(s) -> bucket $bucket\n";
+    }
+
     $db->exec("SET FOREIGN_KEY_CHECKS = 1");
     
     echo "\n=== Seeded successfully! ===\n";
