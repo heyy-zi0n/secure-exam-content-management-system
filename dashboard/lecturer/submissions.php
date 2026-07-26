@@ -6,7 +6,6 @@ $breadcrumbs = [
 ];
 
 require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../helpers/security_helper.php';
 
 requireRole('lecturer');
@@ -144,6 +143,8 @@ $tabItems = [
     'returned'  => ['label' => 'Returned',   'count' => $returnedCount,   'icon' => '↩️'],
     'approved'  => ['label' => 'Approved',   'count' => $approvedCount,   'icon' => '✅'],
 ];
+
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="space-y-6">

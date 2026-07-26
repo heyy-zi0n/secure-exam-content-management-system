@@ -7,7 +7,6 @@ $breadcrumbs = [
 ];
 
 require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../helpers/security_helper.php';
 require_once __DIR__ . '/../../helpers/document_helper.php';
 
@@ -81,6 +80,8 @@ function statusBadgeClass(string $status): string {
 $isDraft    = ($paper['submission_status'] === 'Draft');
 $isReturned = ($paper['submission_status'] === 'Returned');
 $canEdit    = $isDraft || $isReturned;
+
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="space-y-6">

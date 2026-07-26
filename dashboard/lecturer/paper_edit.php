@@ -7,7 +7,6 @@ $breadcrumbs = [
 ];
 
 require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../helpers/security_helper.php';
 require_once __DIR__ . '/../../helpers/document_helper.php';
 
@@ -349,6 +348,8 @@ function fieldError(string $field, array $errors): string {
     if (empty($errors[$field])) return '';
     return '<p class="mt-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium">' . htmlspecialchars($errors[$field]) . '</p>';
 }
+
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="space-y-6">
